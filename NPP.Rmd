@@ -1,0 +1,63 @@
+---
+title: "Nuclear Power Plants in the World"
+author: "Raphael Villedieu"
+date: "November 3, 2017"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Location of Nuclear Power Plants in the World
+
+The data is obtained from 
+https://fusiontables.google.com/DataSource?snapid=S2005713FL2n
+
+The size of the circles is proportional to the number of reactors on one site.
+
+```{r , echo=FALSE, message=FALSE}
+
+library(leaflet)
+
+df <- read.csv("/home/raphael/Downloads/Nuclear power stations worldwide.csv")
+# https://fusiontables.google.com/DataSource?snapid=S2005713FL2n
+NPP <- data.frame(
+  nofActiveReactors = df$Active.Reactors,
+  lat = as.numeric(gsub(",[-.0123456789]*","",df$Location)),
+  lng = as.numeric(gsub("[-.0123456789]*,","",df$Location)),
+  type = factor(
+    ifelse( df$Active.Reactors> 0, "Active", ifelse( df$Shut.Down.Reactors > 0, "Shutdown", "Under Construction")),
+    c("Active","Shutdown","Under Construction") ) )
+
+mycol=c('#FF0000',
+        '#ffff00',
+        '#00ffff',
+        '#ff00ff',
+        '#0000ff',
+        '#00ff00',
+        '#aa00ff'
+)
+DP = read.csv("/home/raphael/Downloads/DP_LIVE_02112017144318241.csv")
+
+pal <- colorFactor(c("red", "black", "green"), domain = c("Active", "Shutdown","Under Construction"))
+
+
+m2 <- NPP %>% leaflet() %>% addTiles() %>% 
+  addCircles(
+    #color = mycol[NPP$nofActiveReactors],
+    
+    color = pal(NPP$type),
+    radius=NPP$nofActiveReactors * 5000 + 10000
+    #clusterOptions = markerClusterOptions()
+  ) %>%
+  addLegend("bottomright", pal = pal, values = NPP$type,
+            title = "Type of Nuclear Reactors",
+            opacity = 1
+  )
+
+m2
+  
+```
